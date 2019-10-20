@@ -27,6 +27,7 @@ parser.add_argument('--niter', default=1, type=int)
 parser.add_argument('--threshold', default=1, type=float)
 parser.add_argument('--online', action='store_true')
 ########################################################################
+parser.add_argument('--load_results', action='store_true')
 parser.add_argument('--resume', default=None)
 parser.add_argument('--outf', default='.')
 
@@ -90,11 +91,7 @@ def run_adapt():
 			adapt_single(ssh, image, optimizer, criterion, args.niter, args.batch_size)
 		preds[name] = pred_single(net, image)
 
-	import random
-	pmlist = list(pmsets.items())
-	random.shuffle(pmlist)
-
-	for anchor, pmset in tqdm(pmlist):
+	for anchor, pmset in tqdm(pmsets.items()):
 		if not args.online:
 			net.load_state_dict(ckpt['net'])
 			head.load_state_dict(ckpt['head'])
@@ -120,10 +117,21 @@ def pmk_from_preds(preds):
 		one_hot_pmk.append(all(correct_pms))
 	return one_hot_anc, one_hot_pmk, correct_pmk
 
-preds_plain = run_plain()
-one_hot_anc, one_hot_pmk, _ = pmk_from_preds(preds_plain)
-print((1-mean(one_hot_anc))*100, (1-mean(one_hot_pmk))*100)
 
-preds_adapt = run_adapt()
-one_hot_anc, one_hot_pmk, _ = pmk_from_preds(preds_adapt)
-print((1-mean(one_hot_anc))*100, (1-mean(one_hot_pmk))*100)
+if args.load_results:
+	preds_plain = torch.load(args.outf + '/plain.pth')
+else:
+	preds_plain = run_plain()
+	torch.save(preds_plain, args.outf + '/plain.pth')
+
+one_hot_anc, _, _ = pmk_from_preds(preds_plain)
+print('Old accuracy: %.2f' %(mean(one_hot_anc)*100))
+
+if args.load_results:
+	preds_adapt = torch.load(args.outf + '/adapt.pth')
+else:
+	preds_adapt = run_adapt()
+	torch.save(preds_adapt, args.outf + '/adapt.pth')
+
+one_hot_anc, _, _ = pmk_from_preds(preds_adapt)
+print('New accuracy: %.2f' %(mean(one_hot_anc)*100))
