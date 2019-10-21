@@ -6,6 +6,9 @@ shared = sys.argv[2]
 setting = sys.argv[3]
 name = sys.argv[4]
 
+dataroot = '--dataroot '
+dataroot += '/data/datasets/imagenet/'		# PLEASE EDIT THIS
+
 common_corruptions = ['gaussian_noise', 'shot_noise', 'impulse_noise', 'defocus_blur', 'glass_blur',
                     'motion_blur', 'zoom_blur', 'snow', 'frost', 'fog',
                     'brightness', 'contrast', 'elastic_transform', 'pixelate', 'jpeg_compression']
@@ -35,6 +38,7 @@ batch_size_test = 64
 for corruption in common_corruptions:
 	print(corruption, 'level', level)
 	call(' '.join(['python', 'test_calls/test_initial.py',
+						dataroot,
 						none_tag,
 						'--group_norm	32',
 						'--worker		16',
@@ -56,6 +60,7 @@ for corruption in common_corruptions:
 						shell=True)
 
 	call(' '.join(['python', 'test_calls/test_adapt.py',
+						dataroot,
 						online_tag,
 						shuffle_tag,
 						'--group_norm	32',
